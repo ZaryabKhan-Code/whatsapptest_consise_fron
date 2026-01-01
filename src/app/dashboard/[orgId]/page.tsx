@@ -35,6 +35,7 @@ export default function OrganizationPage() {
     isLoading: chatLoading,
     fetchConversations,
     setCurrentConversation,
+    setCurrentOrgId,
     sendMessage,
     reset: resetChat,
   } = useChatStore();
@@ -72,9 +73,10 @@ export default function OrganizationPage() {
 
   useEffect(() => {
     if (org?.is_connected) {
+      setCurrentOrgId(orgId);
       fetchConversations(orgId);
     }
-  }, [org?.is_connected, orgId, fetchConversations]);
+  }, [org?.is_connected, orgId, fetchConversations, setCurrentOrgId]);
 
   const fetchOrganization = async () => {
     try {
@@ -131,7 +133,7 @@ export default function OrganizationPage() {
     if (!messageInput.trim() || !currentConversation || isSending) return;
 
     setIsSending(true);
-    await sendMessage(orgId, currentConversation, messageInput.trim());
+    await sendMessage(currentConversation, messageInput.trim());
     setMessageInput("");
     setIsSending(false);
   };
@@ -141,7 +143,8 @@ export default function OrganizationPage() {
     if (!newChatPhone.trim() || !newChatMessage.trim()) return;
 
     setIsSending(true);
-    const success = await sendMessage(orgId, newChatPhone.trim(), newChatMessage.trim());
+    setCurrentOrgId(orgId); // Ensure orgId is set before sending
+    const success = await sendMessage(newChatPhone.trim(), newChatMessage.trim());
     if (success) {
       setShowNewChat(false);
       setNewChatPhone("");
