@@ -43,7 +43,7 @@ export interface OrganizationMember {
 
 export interface WhatsAppCredentials {
   phone_number_id: string;
-  business_account_id: string;
+  business_account_id?: string;
   access_token: string;
   webhook_verify_token?: string;
 }
