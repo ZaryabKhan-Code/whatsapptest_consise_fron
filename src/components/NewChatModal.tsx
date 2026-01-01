@@ -7,14 +7,15 @@ import { useChatStore } from "@/store/chat";
 interface NewChatModalProps {
   isOpen: boolean;
   onClose: () => void;
+  orgId: number;
 }
 
-export default function NewChatModal({ isOpen, onClose }: NewChatModalProps) {
+export default function NewChatModal({ isOpen, onClose, orgId }: NewChatModalProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
-  const { sendMessage, setCurrentConversation, fetchConversations } = useChatStore();
+  const { sendMessage, setCurrentConversation, fetchConversations, setCurrentOrgId } = useChatStore();
 
   if (!isOpen) return null;
 
@@ -36,11 +37,12 @@ export default function NewChatModal({ isOpen, onClose }: NewChatModalProps) {
     const cleanedNumber = phoneNumber.replace(/[^\d+]/g, "");
 
     setIsSending(true);
+    setCurrentOrgId(orgId); // Ensure orgId is set before sending
     const success = await sendMessage(cleanedNumber, message.trim());
 
     if (success) {
-      await fetchConversations();
-      setCurrentConversation(cleanedNumber);
+      await fetchConversations(orgId);
+      setCurrentConversation(orgId, cleanedNumber);
       setPhoneNumber("");
       setMessage("");
       onClose();

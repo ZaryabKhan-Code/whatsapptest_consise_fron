@@ -5,7 +5,11 @@ import { MessageCircle, User, Settings, RefreshCw } from "lucide-react";
 import { useChatStore } from "@/store/chat";
 import { formatDistanceToNow } from "date-fns";
 
-export default function Sidebar() {
+interface SidebarProps {
+  orgId: number;
+}
+
+export default function Sidebar({ orgId }: SidebarProps) {
   const {
     conversations,
     currentConversation,
@@ -15,8 +19,10 @@ export default function Sidebar() {
   } = useChatStore();
 
   useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+    if (orgId) {
+      fetchConversations(orgId);
+    }
+  }, [orgId, fetchConversations]);
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
@@ -27,7 +33,7 @@ export default function Sidebar() {
           <h1 className="font-semibold text-lg">WhatsApp Business</h1>
         </div>
         <button
-          onClick={() => fetchConversations()}
+          onClick={() => fetchConversations(orgId)}
           className="p-2 hover:bg-whatsapp-dark rounded-full transition-colors"
           disabled={isLoading}
         >
@@ -56,7 +62,7 @@ export default function Sidebar() {
           conversations.map((conversation) => (
             <div
               key={conversation.phone_number}
-              onClick={() => setCurrentConversation(conversation.phone_number)}
+              onClick={() => setCurrentConversation(orgId, conversation.phone_number)}
               className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
                 currentConversation === conversation.phone_number
                   ? "bg-gray-100"
