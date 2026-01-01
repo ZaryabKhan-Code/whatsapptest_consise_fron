@@ -5,6 +5,7 @@ import { messagesApi } from "@/lib/api";
 interface ChatState {
   conversations: Conversation[];
   currentConversation: string | null;
+  currentOrgId: number | null;
   messages: Message[];
   contacts: Contact[];
   isLoading: boolean;
@@ -15,7 +16,8 @@ interface ChatState {
   fetchMessages: (orgId: number, phoneNumber: string) => Promise<void>;
   fetchContacts: (orgId: number) => Promise<void>;
   setCurrentConversation: (orgId: number, phoneNumber: string | null) => void;
-  sendMessage: (orgId: number, to: string, message: string) => Promise<boolean>;
+  setCurrentOrgId: (orgId: number) => void;
+  sendMessage: (to: string, message: string) => Promise<boolean>;
   addMessage: (message: Message) => void;
   reset: () => void;
 }
@@ -23,6 +25,7 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   currentConversation: null,
+  currentOrgId: null,
   messages: [],
   contacts: [],
   isLoading: false,
@@ -61,13 +64,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   setCurrentConversation: (orgId: number, phoneNumber: string | null) => {
-    set({ currentConversation: phoneNumber });
+    set({ currentConversation: phoneNumber, currentOrgId: orgId });
     if (phoneNumber) {
       get().fetchMessages(orgId, phoneNumber);
     }
   },
 
-  sendMessage: async (orgId: number, to: string, message: string) => {
+  setCurrentOrgId: (orgId: number) => {
+    set({ currentOrgId: orgId });
+  },
+
+  sendMessage: async (to: string, message: string) => {
+    const orgId = get().currentOrgId;
+    if (!orgId) {
+      console.error("No organization selected");
+      return false;
+    }
     try {
       const response = await messagesApi.sendText(orgId, to, message);
       if (response.success) {
@@ -103,6 +115,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({
       conversations: [],
       currentConversation: null,
+      currentOrgId: null,
       messages: [],
       contacts: [],
       isLoading: false,
