@@ -116,7 +116,7 @@ export default function WhatsAppConnect({
   };
 
   const sessionInfoListener = useCallback(
-    (event: MessageEvent) => {
+    function handleSessionInfo(event: MessageEvent): void {
       if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") {
         return;
       }
@@ -179,57 +179,57 @@ export default function WhatsAppConnect({
     setStatus("connecting");
     setStatusMessage("Opening WhatsApp Business connection...");
 
-    // Use WhatsApp Business App Coexistence feature
-    window.FB.login(
-      (response: FacebookLoginResponse) => {
-        if (response.authResponse) {
-          const fbAccessToken = response.authResponse.accessToken;
-          setStatusMessage("Connecting your WhatsApp Business App...");
+    // Define callback as a regular named function to avoid async detection issues
+    function fbLoginCallback(response: FacebookLoginResponse): void {
+      if (response.authResponse) {
+        const fbAccessToken = response.authResponse.accessToken;
+        setStatusMessage("Connecting your WhatsApp Business App...");
 
-          // Handle async operations separately
-          embeddedSignupApi.exchangeToken(orgId, fbAccessToken)
-            .then((result) => {
-              if (result.success) {
-                setStatus("success");
-                setStatusMessage("Connected successfully!");
-                onSuccess({
-                  business_name: result.business_name,
-                  business_phone: result.business_phone,
-                  webhook_url: result.webhook_url,
-                  webhook_verify_token: result.webhook_verify_token,
-                });
-              } else {
-                throw new Error(result.message || "Failed to connect");
-              }
-            })
-            .catch((err: any) => {
-              setStatus("error");
-              const errorMsg = err.response?.data?.detail || err.message || "Connection failed";
-              setStatusMessage(errorMsg);
-              onError(errorMsg);
-            })
-            .finally(() => {
-              setIsLoading(false);
-            });
-        } else {
-          setStatus("idle");
-          setStatusMessage("");
-          onError("Facebook login was cancelled or failed");
-          setIsLoading(false);
-        }
-      },
-      {
-        config_id: fbConfigId,
-        response_type: "code",
-        override_default_response_type: true,
-        extras: {
-          setup: {},
-          // Enable WhatsApp Business App Coexistence
-          featureType: "whatsapp_business_app_onboarding",
-          sessionInfoVersion: "3",
-        },
+        // Handle async operations separately using Promise chain
+        embeddedSignupApi.exchangeToken(orgId, fbAccessToken)
+          .then(function(result) {
+            if (result.success) {
+              setStatus("success");
+              setStatusMessage("Connected successfully!");
+              onSuccess({
+                business_name: result.business_name,
+                business_phone: result.business_phone,
+                webhook_url: result.webhook_url,
+                webhook_verify_token: result.webhook_verify_token,
+              });
+            } else {
+              throw new Error(result.message || "Failed to connect");
+            }
+          })
+          .catch(function(err: any) {
+            setStatus("error");
+            const errorMsg = err.response?.data?.detail || err.message || "Connection failed";
+            setStatusMessage(errorMsg);
+            onError(errorMsg);
+          })
+          .finally(function() {
+            setIsLoading(false);
+          });
+      } else {
+        setStatus("idle");
+        setStatusMessage("");
+        onError("Facebook login was cancelled or failed");
+        setIsLoading(false);
       }
-    );
+    }
+
+    // Use WhatsApp Business App Coexistence feature
+    window.FB.login(fbLoginCallback, {
+      config_id: fbConfigId,
+      response_type: "code",
+      override_default_response_type: true,
+      extras: {
+        setup: {},
+        // Enable WhatsApp Business App Coexistence
+        featureType: "whatsapp_business_app_onboarding",
+        sessionInfoVersion: "3",
+      },
+    });
   };
 
   const handleManualConnect = async (e: React.FormEvent) => {
