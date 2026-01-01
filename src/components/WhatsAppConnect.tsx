@@ -116,7 +116,7 @@ export default function WhatsAppConnect({
   };
 
   const sessionInfoListener = useCallback(
-    async (event: MessageEvent) => {
+    (event: MessageEvent) => {
       if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") {
         return;
       }
