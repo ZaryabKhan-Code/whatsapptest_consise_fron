@@ -247,11 +247,16 @@ export default function WhatsAppConnect({
         business_account_id: wabaId || undefined,
       });
 
+      // Fetch webhook info after successful connection
+      const webhookInfo = await organizationsApi.getWebhookUrl(orgId);
+
       setStatus("success");
       setStatusMessage("Connected successfully!");
       onSuccess({
-        webhook_url: result.webhook_url,
-        webhook_verify_token: result.webhook_verify_token,
+        business_name: result.business_name || undefined,
+        business_phone: result.business_phone || undefined,
+        webhook_url: webhookInfo.webhook_url,
+        webhook_verify_token: webhookInfo.verify_token,
       });
     } catch (err: any) {
       setStatus("error");
