@@ -181,38 +181,42 @@ export default function WhatsAppConnect({
 
     // Use WhatsApp Business App Coexistence feature
     window.FB.login(
-      async (response: FacebookLoginResponse) => {
+      (response: FacebookLoginResponse) => {
         if (response.authResponse) {
           const fbAccessToken = response.authResponse.accessToken;
           setStatusMessage("Connecting your WhatsApp Business App...");
 
-          try {
-            const result = await embeddedSignupApi.exchangeToken(orgId, fbAccessToken);
-
-            if (result.success) {
-              setStatus("success");
-              setStatusMessage("Connected successfully!");
-              onSuccess({
-                business_name: result.business_name,
-                business_phone: result.business_phone,
-                webhook_url: result.webhook_url,
-                webhook_verify_token: result.webhook_verify_token,
-              });
-            } else {
-              throw new Error(result.message || "Failed to connect");
-            }
-          } catch (err: any) {
-            setStatus("error");
-            const errorMsg = err.response?.data?.detail || err.message || "Connection failed";
-            setStatusMessage(errorMsg);
-            onError(errorMsg);
-          }
+          // Handle async operations separately
+          embeddedSignupApi.exchangeToken(orgId, fbAccessToken)
+            .then((result) => {
+              if (result.success) {
+                setStatus("success");
+                setStatusMessage("Connected successfully!");
+                onSuccess({
+                  business_name: result.business_name,
+                  business_phone: result.business_phone,
+                  webhook_url: result.webhook_url,
+                  webhook_verify_token: result.webhook_verify_token,
+                });
+              } else {
+                throw new Error(result.message || "Failed to connect");
+              }
+            })
+            .catch((err: any) => {
+              setStatus("error");
+              const errorMsg = err.response?.data?.detail || err.message || "Connection failed";
+              setStatusMessage(errorMsg);
+              onError(errorMsg);
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
         } else {
           setStatus("idle");
           setStatusMessage("");
           onError("Facebook login was cancelled or failed");
+          setIsLoading(false);
         }
-        setIsLoading(false);
       },
       {
         config_id: fbConfigId,
